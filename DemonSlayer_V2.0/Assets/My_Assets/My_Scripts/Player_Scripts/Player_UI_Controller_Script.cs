@@ -6,24 +6,18 @@ public class Player_UI_Controller_Script : MonoBehaviour
 {
     public static Player_UI_Controller_Script instance;          // Ensures there is only 1 instance of this object
 
-    [SerializeField]
-    private Text AmmoText;                                  // Assign AmmoText from scene
+    public Text creditsText;
+    public Text AmmoText;                                  // Assign AmmoText from scene
+    public Text messageText;
 
-    [SerializeField]
-    private Scrollbar shieldScrollbar;
+    public Image shieldBarHandle;
+    public Image healthBarHandle;
 
-    [SerializeField]
-    private Scrollbar healthScrollbar;
+    public Scrollbar shieldScrollbar;
+    public Scrollbar healthScrollbar;
+    public Scrollbar activeReloadScrollbar;
 
-    [SerializeField]
-    private GameObject activeReloadGO;
-
-    private Scrollbar activeReloadScrollbar;
-    [SerializeField]
-    private Text messageText;
-
-    [SerializeField]
-    private Text creditsText;
+    public GameObject activeReloadGO;
 
     void Awake()                                            // First function to run in scene
     {
@@ -41,9 +35,9 @@ public class Player_UI_Controller_Script : MonoBehaviour
             healthScrollbar = GameObject.Find("Health_Scrollbar").GetComponent<Scrollbar>();     
     }
 
-    public void UpdateCreditsText()
+    public void UpdatePointsText()
     {
-        creditsText.text = Game_Manager_Script.instance.playerCredits.ToString("N0") + "cr";
+        creditsText.text = Player_Script.instance.pts.ToString("N0") + "cr";
     }
     public void UpdateAmmoText(string message)
     {

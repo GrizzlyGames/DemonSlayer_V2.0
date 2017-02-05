@@ -7,6 +7,7 @@ public class Player_Script : MonoBehaviour
     #region Public_Variables
     public static Player_Script instance;
     #region Player_Stats
+    public int pts;
     public int maxShield;
     public int shield;
     public int maxHealth;
@@ -37,6 +38,7 @@ public class Player_Script : MonoBehaviour
     private GameObject projectileGO;                                             // Holds a reference to the first person camera
     private AudioSource gunAudio;  
     #endregion
+    private LayerMask myLayerMask = 1 << 8;
     private float nextFire; 
     private bool bReloading;
     #endregion
@@ -56,7 +58,7 @@ public class Player_Script : MonoBehaviour
         gunAudio = GetComponent<AudioSource>();
     }
 
-    LayerMask myLayerMask = 1 << 8;
+    
 
     void Update()
     {        
@@ -161,24 +163,30 @@ public class Player_Script : MonoBehaviour
         return (Weapons_Class.instance.MagazineCapacity());
     }
 
-    public Vector3 PlayerPosition()
-    {
-        return (transform.position);
-    }
     public Transform PlayerTransform()
     {
         return (transform);
     }
 
-
-    public void DecreaseHealth(int healthAmount)
+    public void TakeDamage(int dmg)
     {
-        health -= healthAmount;
-        if (health <= 0)
-        {
-            gameObject.transform.GetChild(0).GetChild(0).gameObject.SetActive(false);
-            Player_UI_Controller_Script.instance.UpdateMessageText("GAME OVER");
+        if (shield > 0){
+            shield -= dmg;
+            Player_UI_Controller_Script.instance.UpdateShieldScrollbar();            
         }
+        else
+        {
+            Player_UI_Controller_Script.instance.shieldBarHandle.enabled = false;
+            health -= dmg;
+            Player_UI_Controller_Script.instance.UpdateHealthScrollbar();
+            if (health <= 0)
+            {
+                Player_UI_Controller_Script.instance.healthBarHandle.enabled = false;
+                Player_UI_Controller_Script.instance.UpdateMessageText("GAME OVER");
+                GetComponent<RigidbodyFirstPersonController>().enabled = false;
+                GetComponent<Player_Script>().enabled = false;
+            }
+        }        
     }
 
     IEnumerator ReloadDelay()
@@ -213,7 +221,7 @@ public class Player_Script : MonoBehaviour
             Player_UI_Controller_Script.instance.UpdateAmmoText(currentAmmo.ToString() + " / " + maximumAmmo.ToString());            
             Destroy(other.gameObject);
         }
-        else if (other.gameObject.tag.Equals("Health"))
+        else if (other.gameObject.tag.Equals("Health") && health < maxHealth)
         {
             Debug.Log("Ammo picked up");
 
@@ -221,7 +229,7 @@ public class Player_Script : MonoBehaviour
             Player_UI_Controller_Script.instance.UpdateHealthScrollbar();
             Destroy(other.gameObject);
         }
-        else if (other.gameObject.tag.Equals("Shield"))
+        else if (other.gameObject.tag.Equals("Shield") && shield < maxShield)
         {
             Debug.Log("Shield picked up");
             shield = maxShield;

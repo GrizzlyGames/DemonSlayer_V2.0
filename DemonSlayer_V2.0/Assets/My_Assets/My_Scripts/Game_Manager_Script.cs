@@ -4,7 +4,6 @@ using UnityEngine;
 
 public class Game_Manager_Script : MonoBehaviour
 {
-
     public static Game_Manager_Script instance;
 
     public GameObject playerGO;                             // Get the player GO from prefabs folder
@@ -15,7 +14,6 @@ public class Game_Manager_Script : MonoBehaviour
 
     public GameObject[] Enemy_GO_Ary;
 
-    public int playerCredits = 0;
     public int spawnNumEnemies = 1;
     public int currentNumEnemies;
 
