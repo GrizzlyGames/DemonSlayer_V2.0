@@ -14,6 +14,8 @@ public class Enemy_Script : MonoBehaviour
     public int damage = 15;
 
     public Image healthBarImage;
+
+    private bool bAttacking = false;
     private Vector3 previousPosition;
     private Animator anim;
     private NavMeshAgent navMeshAgent;
@@ -29,37 +31,38 @@ public class Enemy_Script : MonoBehaviour
     }
     void Update()
     {
-        #region Attack
-        float distance = Vector3.Distance(transform.position, Player_Script.instance.PlayerTransform().position);     // Get distence from player // Debug.Log(distance);
-        anim.SetFloat("targetDistence", distance);
-        if (distance <= 3 && Player_Script.instance.health > 0)
-            if (!bAttacking)
+        if (health > 0) // check if enemy is alive
+        {
+            #region Attack
+            float distance = Vector3.Distance(transform.position, Player_Script.instance.PlayerTransform().position);     // Get distence from player // Debug.Log(distance);
+            anim.SetFloat("targetDistence", distance);
+            if (distance <= 3.1f && Player_Script.instance.health > 0 && !bAttacking)
                 StartCoroutine(AttackDelay());
-        #endregion
-        #region Determine-Actor-Speed
-        float curSpeed;
-        Vector3 curMove = transform.position - previousPosition;
-        curSpeed = curMove.magnitude / Time.deltaTime;      // Debug.Log("curSpeed: " + curSpeed);
-        anim.SetFloat("speed", curSpeed);
-        previousPosition = transform.position;
-        #endregion      // Set actor movement animation state
-        #region Chase-Player
-        if (alive && canWalk)  // check if actor is alive
-            navMeshAgent.destination = Player_Script.instance.PlayerTransform().position;     // Chase player
-        else
-            navMeshAgent.velocity = Vector3.zero;
-        #endregion
-        #region Look-At-Player
-        Vector3 lookPos = Player_Script.instance.PlayerTransform().position - transform.position;
-        lookPos.y = 0;
-        var rotation = Quaternion.LookRotation(lookPos);
-        transform.rotation = Quaternion.Slerp(transform.rotation, rotation, Time.deltaTime * lookSpeed);
-        #endregion
+            #endregion
+            #region Determine-Actor-Speed
+            float curSpeed;
+            Vector3 curMove = transform.position - previousPosition;
+            curSpeed = curMove.magnitude / Time.deltaTime;      // Debug.Log("curSpeed: " + curSpeed);
+            anim.SetFloat("speed", curSpeed);
+            previousPosition = transform.position;
+            #endregion      // Set actor movement animation state
+            #region Chase-Player
+            if (alive && canWalk)  // check if actor is alive
+                navMeshAgent.destination = Player_Script.instance.PlayerTransform().position;     // Chase player
+            else
+                navMeshAgent.velocity = Vector3.zero;
+            #endregion
+            #region Look-At-Player
+            Vector3 lookPos = Player_Script.instance.PlayerTransform().position - transform.position;
+            lookPos.y = 0;
+            var rotation = Quaternion.LookRotation(lookPos);
+            transform.rotation = Quaternion.Slerp(transform.rotation, rotation, Time.deltaTime * lookSpeed);
+            #endregion
+        }        
     }
     public void TakeDamage(int dmg)
     {
-        health -= dmg;  // Take damage
-        Debug.Log(transform.name + " took " + dmg + " dmg. Remaing health: " + health);
+        health -= dmg;  // Take damage Debug.Log(transform.name + " took " + dmg + " dmg. Remaing health: " + health);        
         healthBarImage.fillAmount = (float)health / (float)maxHealth;
         if (health > 0)
         {
@@ -90,7 +93,7 @@ public class Enemy_Script : MonoBehaviour
             }
         }
     }
-    private bool bAttacking = false;
+    
     IEnumerator AttackDelay()
     {
         bAttacking = true;

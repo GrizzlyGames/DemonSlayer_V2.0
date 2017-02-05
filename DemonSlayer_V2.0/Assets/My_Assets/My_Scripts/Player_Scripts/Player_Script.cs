@@ -8,8 +8,10 @@ public class Player_Script : MonoBehaviour
     public static Player_Script instance;
     #region Player_Stats
     public int pts;
+    public bool bShieldRecharge;
+    public float shieldRechargeWaitTime = 1;
     public int maxShield;
-    public int shield;
+    public float shield;
     public int maxHealth;
     public int health;
     #endregion
@@ -34,12 +36,12 @@ public class Player_Script : MonoBehaviour
     #region Stats
 
     #endregion
-    #region 
+    #region
     private GameObject projectileGO;                                             // Holds a reference to the first person camera
-    private AudioSource gunAudio;  
+    private AudioSource gunAudio;
     #endregion
     private LayerMask myLayerMask = 1 << 8;
-    private float nextFire; 
+    private float nextFire;
     private bool bReloading;
     #endregion
 
@@ -58,10 +60,17 @@ public class Player_Script : MonoBehaviour
         gunAudio = GetComponent<AudioSource>();
     }
 
-    
+
 
     void Update()
-    {        
+    {
+        if (bShieldRecharge && shield < maxShield)
+        {
+            if (Player_UI_Controller_Script.instance.shieldBarHandle.enabled == false && shield > 0)
+                Player_UI_Controller_Script.instance.shieldBarHandle.enabled = true;
+            shield += 1.5f / shieldRechargeWaitTime * Time.deltaTime;
+            Player_UI_Controller_Script.instance.UpdateShieldScrollbar();
+        }
         if (health > 0)
         {
             if (Input.GetMouseButtonDown(0))
@@ -78,9 +87,9 @@ public class Player_Script : MonoBehaviour
                         Vector3 rayOrigin = fpsCam.ViewportToWorldPoint(new Vector3(0.5f, 0.5f, 0.0f));     // Create a vector at the center of our camera's viewport
                         Debug.DrawRay(rayOrigin, fpsCam.transform.forward * weaponRange, Color.green);      // Draw a line in the Scene View  from the point rayOrigin in the direction of fpsCam.transform.forward * weaponRange, using the color green
                         RaycastHit hit;     // Declare a raycast hit to store information about what our raycast has hit
-                        
+
                         if (Physics.Raycast(rayOrigin, fpsCam.transform.forward, out hit, weaponRange, myLayerMask))     // Check if our raycast has hit anything
-                        {         
+                        {
                             if (hit.transform.GetComponent<Enemy_Script>() != null)
                                 hit.transform.GetComponent<Enemy_Script>().TakeDamage((int)damage * (int)damageMultiplier);
                             if (hit.rigidbody != null)      // Check if the object we hit has a rigidbody attached
@@ -91,7 +100,7 @@ public class Player_Script : MonoBehaviour
                         #endregion      // Handles raycast of weapon being shot
                     }
                     Player_UI_Controller_Script.instance.UpdateAmmoText(currentAmmo.ToString() + " / " + maximumAmmo.ToString());       // Updates reload text
-                }                    
+                }
                 if (currentAmmo < 1 && maximumAmmo > 1 && !bReloading)
                 {
                     damageMultiplier = 4;
@@ -101,7 +110,7 @@ public class Player_Script : MonoBehaviour
                 {
                     damageMultiplier = 4;
                     Player_UI_Controller_Script.instance.UpdateAmmoText("No ammo!");
-                }                  
+                }
             }
 
             if (Input.GetKeyUp(KeyCode.R))
@@ -170,9 +179,15 @@ public class Player_Script : MonoBehaviour
 
     public void TakeDamage(int dmg)
     {
-        if (shield > 0){
+        bShieldRecharge = false;
+        if (!shieldRechargeCalled)
+            StartCoroutine(ShieldRechargeDelay());
+        if (shield > 0)
+        {
             shield -= dmg;
-            Player_UI_Controller_Script.instance.UpdateShieldScrollbar();            
+            if (shield < 0)
+                shield = 0;
+            Player_UI_Controller_Script.instance.UpdateShieldScrollbar();
         }
         else
         {
@@ -186,7 +201,7 @@ public class Player_Script : MonoBehaviour
                 GetComponent<RigidbodyFirstPersonController>().enabled = false;
                 GetComponent<Player_Script>().enabled = false;
             }
-        }        
+        }
     }
 
     IEnumerator ReloadDelay()
@@ -209,7 +224,14 @@ public class Player_Script : MonoBehaviour
         Player_UI_Controller_Script.instance.UpdateAmmoText(currentAmmo.ToString() + " / " + maximumAmmo.ToString());
         bReloading = false;
     }
-
+    private bool shieldRechargeCalled = false;
+    IEnumerator ShieldRechargeDelay()
+    {
+        shieldRechargeCalled = true;
+        yield return new WaitForSeconds(5);
+        bShieldRecharge = true;
+        shieldRechargeCalled = false;
+    }
     void OnTriggerEnter(Collider other)
     {
         #region Get_PickUp
@@ -218,7 +240,7 @@ public class Player_Script : MonoBehaviour
             Debug.Log("Ammo picked up");
 
             maximumAmmo = GetMaximumAmmo();
-            Player_UI_Controller_Script.instance.UpdateAmmoText(currentAmmo.ToString() + " / " + maximumAmmo.ToString());            
+            Player_UI_Controller_Script.instance.UpdateAmmoText(currentAmmo.ToString() + " / " + maximumAmmo.ToString());
             Destroy(other.gameObject);
         }
         else if (other.gameObject.tag.Equals("Health") && health < maxHealth)
@@ -231,7 +253,6 @@ public class Player_Script : MonoBehaviour
         }
         else if (other.gameObject.tag.Equals("Shield") && shield < maxShield)
         {
-            Debug.Log("Shield picked up");
             shield = maxShield;
             Player_UI_Controller_Script.instance.UpdateShieldScrollbar();
             Destroy(other.gameObject);
