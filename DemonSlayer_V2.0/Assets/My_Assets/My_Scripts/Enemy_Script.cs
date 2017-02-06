@@ -58,7 +58,11 @@ public class Enemy_Script : MonoBehaviour
             var rotation = Quaternion.LookRotation(lookPos);
             transform.rotation = Quaternion.Slerp(transform.rotation, rotation, Time.deltaTime * lookSpeed);
             #endregion
-        }        
+        }
+        else
+        {
+            navMeshAgent.velocity = Vector3.zero;
+        }
     }
     public void TakeDamage(int dmg)
     {
